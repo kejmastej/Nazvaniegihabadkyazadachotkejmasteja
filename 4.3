@@ -1,0 +1,34 @@
+#include <iostream>
+#include "R2Graph.h"
+
+using namespace std;
+
+double distance(const R2Point& p1, const R2Point& p2);
+R2Point lemoinePoint(const R2Point& A, const R2Point& B, const R2Point& C);
+
+int main() {
+    R2Point A, B, C;
+    cout << "Enter vertices of triangle (A, B, C):" << endl;
+    cin >> A >> B >> C;
+
+    R2Point K = lemoinePoint(A, B, C);
+    cout << "Lemoine point: " << K << endl;
+
+    return 0;
+}
+
+R2Point lemoinePoint(const R2Point& A, const R2Point& B, const R2Point& C) {
+    double a2 = (B - C).norm2();
+    double b2 = (A - C).norm2();
+    double c2 = (A - B).norm2();
+
+    double sum = a2 + b2 + c2;
+    double x = (a2 * A.x + b2 * B.x + c2 * C.x) / sum;
+    double y = (a2 * A.y + b2 * B.y + c2 * C.y) / sum;
+
+    return R2Point(x, y);
+}
+
+double distance(const R2Point& p1, const R2Point& p2) {
+    return (p1 - p2).length();
+}
