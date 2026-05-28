@@ -1,0 +1,173 @@
+3
+
+
+#include <stdio.h>
+#include <math.h>
+#include <assert.h>
+
+double f(double);
+double f_antider(double);
+double simpson(
+    double (*f)(double), double a, double b, double dx = 0.001
+);
+
+int main() {
+    while (true) {
+        double a, b, dx;
+        printf("Enter a, b, dx:\n");
+        if (scanf("%lf%lf%lf", &a, &b, &dx) < 3)
+            break;
+        double y = simpson(f, a, b, dx);
+        double yPresize = f_antider(b) - f_antider(a);
+        printf("Integral = %.12f\n", y);
+        printf("Presize value = %.12f\n", yPresize);
+    }
+    return 0;
+}
+
+double f(double x) {
+    return x*x*x - x - 1.;
+}
+
+double f_antider(double x) {
+    return x*x*x*x/4. - x*x/2 - x;
+}
+        
+double simpson(
+    double (*f)(double), double a, double b, double dx
+) {
+    assert(dx > 0.);
+    int n = int((b - a)/dx);
+    if (n == 0)
+        n = 1;
+    dx = (b - a)/double(n);
+    
+    double s0 = f(a) + f(b);
+
+    double s1 = 0.;
+    double x = a + dx/2.;
+    for (int i = 0; i < n; ++i) {
+        s1 += f(x);
+        x += dx;
+    }
+    
+    double s2 = 0.;
+    x = a + dx;
+    for (int i = 0; i < n - 1; ++i) {
+        s2 += f(x);
+        x += dx;
+    }
+    
+    return dx*(s0 + 4.*s1 + 2.*s2)/6.;
+}
+
+
+5
+
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cmath>
+#include "R2Graph.h"
+
+using namespace std;
+
+void computeConvexHull(
+    const vector<R2Point>& points,
+    vector<R2Point>& convexHull
+);
+
+bool compareVectors(
+    const R2Vector& v1, const R2Vector& v2
+);
+
+int main() {
+    cout << "Enter the number of points:" <<endl;
+    int n;
+    cin >> n;
+    vector<R2Point> points(n);
+    cout << "Enter the points:" <<endl;
+    for (int i = 0; i < n; ++i) {
+        cin >> points[i];
+    }
+    
+    vector<R2Point> convexHull;
+    computeConvexHull(points, convexHull);
+    
+    cout << "Convex Hull:" << endl;
+    for (size_t i = 0; i < convexHull.size(); ++i) {
+        //cout << points[i] << " ";
+        cout << convexHull[i] << " ";
+    }
+    cout << endl;
+    return 0;
+}
+
+void computeConvexHull(
+    const vector<R2Point>& points,
+    vector<R2Point>& convexHull
+) {
+    if (points.size() == 0)
+        return;
+    int n = int(points.size());
+    
+    //1. Find the left-most point
+    int leftPointIdx = 0;
+    for (int i = 0; i < n; ++i) {
+        if (points[i] < points[leftPointIdx])
+            leftPointIdx = i;
+    }
+    
+    R2Point o = points[leftPointIdx];
+    //vector<R2Vector> radiusVectors(n - 1);
+    vector<R2Vector> radiusVectors;
+    //radiusVectors.reserve(n - 1);
+    for (int i = 0; i < n; ++i) {
+        if (i == leftPointIdx)
+            continue;
+        radiusVectors.push_back(points[i] - o);
+    }
+    
+    sort(
+        radiusVectors.begin(), radiusVectors.end(),
+         compareVectors
+    );
+    
+    convexHull.clear();
+    convexHull.push_back(o);
+    convexHull.push_back(o + radiusVectors[0]);
+    if (n < 3)
+        return;
+    for (int i = 1; i < n - 1; ++i) {
+        R2Point t = o + radiusVectors[i];
+        R2Vector vLast = convexHull[convexHull.size() - 1] - convexHull[convexHull.size() - 2];
+        R2Vector vNew = t - convexHull[convexHull.size() - 1];
+        while (convexHull.size() >= 3 && vLast.angle(vNew) <= 0.) {
+            convexHull.pop_back();
+            vLast = convexHull[convexHull.size() - 1] - convexHull[convexHull.size() - 2];
+            vNew = t - convexHull[convexHull.size() - 1];
+        }
+        // while (convexHull.size() >= 3 && vLast.signed_area(vNew) <= 0) {
+        //     convexHull.pop_back();
+        //     vLast = convexHull[convexHull.size() - 1] - convexHull[convexHull.size()-2];
+        //     vNew = t - convexHull[convexHull.size() - 1];
+        // }
+        convexHull.push_back(t);
+    }
+}
+
+bool compareVectors(
+    const R2Vector& v1, const R2Vector& v2
+) {
+    R2Vector ex(1., 0.);
+    double angle1 = ex.angle(v1);
+    double angle2 = ex.angle(v2);
+    // return (
+    //     angle1 < angle2 ||
+    //     (
+    //         angle1 <= angle2 &&
+    //         v1.norm() < v2.norm()
+    //     )
+    // );
+    if (fabs(angle1 - angle2) < 1e-12)
+        return v1.
