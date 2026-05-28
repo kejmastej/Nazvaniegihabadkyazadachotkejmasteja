@@ -1,0 +1,74 @@
+#include <fstream>
+#include <algorithm>
+
+void merge(double* left, int leftSize, double* right, int rightSize, double* out) {
+    int i = 0, j = 0, k = 0;
+    while (i < leftSize && j < rightSize) {
+        if (left[i] <= right[j]) out[k++] = left[i++];
+        else out[k++] = right[j++];
+    }
+    while (i < leftSize) out[k++] = left[i++];
+    while (j < rightSize) out[k++] = right[j++];
+}
+
+void copyArray(double* src, int n, double* dst) {
+    for (int i = 0; i < n; ++i) dst[i] = src[i];
+}
+
+void mergeSortBottomTop(
+    double *a,
+    int n,
+    double* tmpMemory = nullptr
+) {
+    if (n <= 1) return;
+    
+    bool allocated = false;
+    if (tmpMemory == nullptr) {
+        tmpMemory = new double[n];
+        allocated = true;
+    }
+    
+    for (int width = 1; width < n; width *= 2) {
+        for (int i = 0; i < n; i += 2 * width) {
+            int left = i;
+            int mid = std::min(i + width, n);
+            int right = std::min(i + 2 * width, n);
+            
+            merge(a + left, mid - left, a + mid, right - mid, tmpMemory + left);
+        }
+        copyArray(tmpMemory, n, a);
+    }
+    
+    if (allocated) {
+        delete[] tmpMemory;
+    }
+}
+
+int main() {
+    std::ifstream in("data.txt");
+    std::ofstream out("res.txt");
+    
+    if (!in || !out) return -1;
+    
+    int n;
+    if (!(in >> n) || n <= 0) return -1;
+    
+    double* arr = new double[n];
+    for (int i = 0; i < n; ++i) {
+        if (!(in >> arr[i])) {
+            delete[] arr;
+            return -1;
+        }
+    }
+    
+    mergeSortBottomTop(arr, n);
+    
+    for (int i = 0; i < n; ++i) {
+        if (i > 0) out << " ";
+        out << arr[i];
+    }
+    out << "\n";
+    
+    delete[] arr;
+    return 0;
+}
